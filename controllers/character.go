@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/felipehfs/rpgapi/models"
 	"github.com/felipehfs/rpgapi/repositories"
+	"github.com/gorilla/mux"
 )
 
 // CreateCharacter saves the caracter
@@ -49,5 +51,36 @@ func ReadCharacter(db *sql.DB) http.HandlerFunc {
 		}
 
 		json.NewEncoder(w).Encode(result)
+	}
+}
+
+// UpdateCharacter changes the users by ID
+func UpdateCharacter(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		var character models.Character
+		defer r.Body.Close()
+
+		id, _ := strconv.ParseInt(vars["id"], 10, 64)
+
+		if err := json.NewDecoder(r.Body).Decode(&character); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := character.IsValid(); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		character.ID = id
+
+		repo := repositories.NewCharacterRepository(db)
+		_, err := repo.Update(character)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 	}
 }

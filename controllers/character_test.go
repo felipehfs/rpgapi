@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/felipehfs/rpgapi/config"
+	"github.com/felipehfs/rpgapi/models"
 
 	"github.com/felipehfs/rpgapi/controllers"
 )
@@ -32,6 +34,29 @@ func TestMain(m *testing.M) {
 	}
 	defer db.Close()
 	os.Exit(m.Run())
+}
+
+var body = []byte(`
+	{
+		"name": "Zeo (created)",
+		"attack": 1230, 
+		"defense": 3200, 
+		"speed": 30,
+		"life": 120
+	}
+`)
+
+func createCharacter() *models.Character {
+	var character models.Character
+	req := httptest.NewRequest("POST", "/characters", bytes.NewBuffer(body))
+	res := httptest.NewRecorder()
+
+	createCaracter := controllers.CreateCharacter(mockDB.DB)
+	createCaracter(res, req)
+	result := res.Result()
+	defer result.Body.Close()
+	json.NewDecoder(result.Body).Decode(&character)
+	return &character
 }
 
 func TestCreateCharacterHandler(t *testing.T) {
@@ -76,4 +101,35 @@ func TestReadCharacterHandler(t *testing.T) {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, result.StatusCode)
 	}
 
+}
+
+func TestUpdateCharacterHandler(t *testing.T) {
+	char := createCharacter()
+
+	testcases := []struct {
+		Name         string
+		Body         []byte
+		ID           int64
+		ExpectedCode int
+	}{
+		{"Expected 200 OK", body, char.ID, http.StatusOK},
+		{"Required Fields: 400 Status", nil, char.ID, http.StatusBadRequest},
+	}
+	updateHandler := controllers.UpdateCharacter(mockDB.DB)
+
+	for _, test := range testcases {
+		t.Run(test.Name, func(t *testing.T) {
+
+			endpoint := fmt.Sprintf("/products/%d", test.ID)
+			req := httptest.NewRequest("PUT", endpoint, bytes.NewBuffer(body))
+			res := httptest.NewRecorder()
+			updateHandler(res, req)
+			result := res.Result()
+
+			if result.StatusCode != http.StatusOK {
+				t.Errorf("Expected status code %d, but got %d", http.StatusOK, result.StatusCode)
+			}
+
+		})
+	}
 }

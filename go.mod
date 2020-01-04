@@ -9,4 +9,5 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/lib/pq v1.3.0
 	github.com/mattn/go-sqlite3 v2.0.2+incompatible
+	golang.org/dl v0.0.0-20191220003028-84da647cadd0 // indirect
 )

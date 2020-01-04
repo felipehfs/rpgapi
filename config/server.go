@@ -26,6 +26,7 @@ func NewServer(db *sql.DB, router *mux.Router) *Server {
 func (server *Server) Routes() {
 	server.Mux.HandleFunc("/api/characters", controllers.CreateCharacter(server.DB)).Methods("POST")
 	server.Mux.HandleFunc("/api/characters", controllers.ReadCharacter(server.DB)).Methods("GET")
+	server.Mux.HandleFunc("/api/characters/{id}", controllers.UpdateCharacter(server.DB)).Methods("PUT")
 }
 
 func (server Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
