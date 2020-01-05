@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"database/sql"
 	"log"
 	"os"
 	"testing"
@@ -67,6 +68,30 @@ func TestRepositoryReadCharacter(t *testing.T) {
 	_, err := mockDB.Repo.Read()
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestRepositoryGetByIDCharacter(t *testing.T) {
+	id, err := mockDB.Repo.Create(data)
+	if err != nil {
+		t.Error(err)
+	}
+	testcases := []struct {
+		Name          string
+		ID            int64
+		ExpectedError error
+	}{
+		{"Expected status - 200 OK ", id, nil},
+		{"Expected status - 404 Not Found", 999999, sql.ErrNoRows},
+	}
+
+	for _, test := range testcases {
+		t.Run(test.Name, func(t *testing.T) {
+			_, err := mockDB.Repo.GetByID(test.ID)
+			if err != test.ExpectedError {
+				t.Errorf("Expected %v but got %v", test.ExpectedError, err)
+			}
+		})
 	}
 }
 

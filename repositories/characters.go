@@ -32,6 +32,17 @@ func (repo CharacterRepository) Create(character models.Character) (int64, error
 	return id, nil
 }
 
+// GetByID retrieves one character if exists
+func (repo CharacterRepository) GetByID(id int64) (models.Character, error) {
+	var char models.Character
+	query := "SELECT * FROM characters WHERE id=$1"
+	err := repo.DB.QueryRow(query, id).Scan(&char.ID,
+		&char.Name, &char.Attack,
+		&char.Defense, &char.Speed,
+		&char.Life)
+	return char, err
+}
+
 func (repo CharacterRepository) Read() ([]models.Character, error) {
 	var characters []models.Character
 	sql := "SELECT * FROM characters"
