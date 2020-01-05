@@ -65,7 +65,14 @@ func TestRepositoryUpdateCharacter(t *testing.T) {
 }
 
 func TestRepositoryReadCharacter(t *testing.T) {
-	_, err := mockDB.Repo.Read()
+	_, err := mockDB.Repo.Read(20, 0)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestRepositoryCountCharacter(t *testing.T) {
+	_, err := mockDB.Repo.Count()
 	if err != nil {
 		t.Error(err)
 	}

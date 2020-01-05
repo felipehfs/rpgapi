@@ -43,10 +43,10 @@ func (repo CharacterRepository) GetByID(id int64) (models.Character, error) {
 	return char, err
 }
 
-func (repo CharacterRepository) Read() ([]models.Character, error) {
+func (repo CharacterRepository) Read(limit, offset int64) ([]models.Character, error) {
 	var characters []models.Character
-	sql := "SELECT * FROM characters"
-	rows, err := repo.DB.Query(sql)
+	sql := "SELECT * FROM characters ORDER BY id LIMIT $1 OFFSET $2"
+	rows, err := repo.DB.Query(sql, limit, offset)
 
 	if err != nil {
 		return nil, err
@@ -59,6 +59,13 @@ func (repo CharacterRepository) Read() ([]models.Character, error) {
 	}
 
 	return characters, nil
+}
+
+// Count calculates the characters that exists
+func (repo CharacterRepository) Count() (int64, error) {
+	var count int64
+	err := repo.DB.QueryRow("SELECT count(*) FROM characters").Scan(&count)
+	return count, err
 }
 
 // Update changes the character by ID

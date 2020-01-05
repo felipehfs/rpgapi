@@ -3,12 +3,17 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/felipehfs/rpgapi/models"
 	"github.com/felipehfs/rpgapi/repositories"
 	"github.com/gorilla/mux"
+)
+
+var (
+	ErrQueryNotFound = errors.New("Query not found in endpoint")
 )
 
 // CreateCharacter saves the caracter
@@ -40,14 +45,68 @@ func CreateCharacter(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+func hasQueryParam(query string, r *http.Request) bool {
+	return r.URL.Query().Get(query) != ""
+}
+
+func parseQueryInt64(query string, r *http.Request, fallback int64) (int64, error) {
+	if hasQueryParam(query, r) {
+		query, err := strconv.ParseInt(r.URL.Query().Get(query), 10, 64)
+		if err != nil {
+			return -1, err
+		}
+		return query, nil
+	}
+
+	return fallback, ErrQueryNotFound
+}
+
 // ReadCharacter retrieves all characters for while
 func ReadCharacter(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		repository := repositories.NewCharacterRepository(db)
-		result, err := repository.Read()
+		total, err := repository.Count()
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var limit int64 = 50
+		var page int64 = 1
+
+		userLimit, err := parseQueryInt64("limit", r, limit)
+
+		if err != nil && err != ErrQueryNotFound {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		limit = userLimit
+
+		userPage, err := parseQueryInt64("page", r, page)
+
+		if err != nil && err != ErrQueryNotFound {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		page = userPage
+
+		offset := (page - 1) * limit
+
+		characters, err := repository.Read(limit, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusFailedDependency)
 			return
+		}
+
+		result := map[string]interface{}{
+			"data":        characters,
+			"page":        page,
+			"limit":       limit,
+			"total_pages": total / limit,
+			"total":       total,
 		}
 
 		json.NewEncoder(w).Encode(result)
