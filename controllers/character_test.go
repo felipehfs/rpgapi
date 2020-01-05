@@ -14,6 +14,7 @@ import (
 
 	"github.com/felipehfs/rpgapi/config"
 	"github.com/felipehfs/rpgapi/models"
+	"github.com/gorilla/mux"
 
 	"github.com/felipehfs/rpgapi/controllers"
 )
@@ -48,7 +49,7 @@ var body = []byte(`
 
 func createCharacter() *models.Character {
 	var character models.Character
-	req := httptest.NewRequest("POST", "/characters", bytes.NewBuffer(body))
+	req := httptest.NewRequest("POST", "/api/characters", bytes.NewBuffer(body))
 	res := httptest.NewRecorder()
 
 	createCaracter := controllers.CreateCharacter(mockDB.DB)
@@ -72,7 +73,7 @@ func TestCreateCharacterHandler(t *testing.T) {
 	for _, tt := range testcases {
 		t.Run(tt.Name, func(t *testing.T) {
 
-			req := httptest.NewRequest("POST", "/characters", bytes.NewBuffer(tt.Body))
+			req := httptest.NewRequest("POST", "/api/characters", bytes.NewBuffer(tt.Body))
 
 			res := httptest.NewRecorder()
 
@@ -91,7 +92,7 @@ func TestCreateCharacterHandler(t *testing.T) {
 }
 
 func TestReadCharacterHandler(t *testing.T) {
-	req := httptest.NewRequest("GET", "/products", nil)
+	req := httptest.NewRequest("GET", "/api/characters", nil)
 	res := httptest.NewRecorder()
 	readCharactersHandler := controllers.ReadCharacter(mockDB.DB)
 	readCharactersHandler(res, req)
@@ -120,9 +121,13 @@ func TestUpdateCharacterHandler(t *testing.T) {
 	for _, test := range testcases {
 		t.Run(test.Name, func(t *testing.T) {
 
-			endpoint := fmt.Sprintf("/products/%d", test.ID)
+			endpoint := "/api/characters/"
 			req := httptest.NewRequest("PUT", endpoint, bytes.NewBuffer(body))
 			res := httptest.NewRecorder()
+			req = mux.SetURLVars(req, map[string]string{
+				"id": fmt.Sprintf("%v", test.ID),
+			})
+
 			updateHandler(res, req)
 			result := res.Result()
 
@@ -130,6 +135,43 @@ func TestUpdateCharacterHandler(t *testing.T) {
 				t.Errorf("Expected status code %d, but got %d", http.StatusOK, result.StatusCode)
 			}
 
+		})
+	}
+}
+
+func TestRemoveCharacterHandler(t *testing.T) {
+	example := createCharacter()
+	testcases := []struct {
+		Name         string
+		ID           int64
+		ExpectedCode int
+	}{
+		{"Expected 201 status Code", example.ID, http.StatusCreated},
+	}
+
+	handler := controllers.RemoveCharacter(mockDB.DB)
+
+	for _, test := range testcases {
+		t.Run(test.Name, func(t *testing.T) {
+			endpoint := "/api/characters/"
+			req := httptest.NewRequest("DELETE", endpoint, nil)
+
+			req = mux.SetURLVars(req, map[string]string{
+				"id": fmt.Sprintf("%v", test.ID),
+			})
+
+			res := httptest.NewRecorder()
+
+			handler(res, req)
+
+			result := res.Result()
+
+			if result.StatusCode != test.ExpectedCode {
+				body, _ := ioutil.ReadAll(result.Body)
+				defer result.Body.Close()
+				fmt.Println(string(body))
+				t.Errorf("Expected status code %d, but got %d", test.ExpectedCode, result.StatusCode)
+			}
 		})
 	}
 }

@@ -61,7 +61,12 @@ func UpdateCharacter(db *sql.DB) http.HandlerFunc {
 		var character models.Character
 		defer r.Body.Close()
 
-		id, _ := strconv.ParseInt(vars["id"], 10, 64)
+		id, err := strconv.ParseInt(vars["id"], 10, 64)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		if err := json.NewDecoder(r.Body).Decode(&character); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -76,11 +81,47 @@ func UpdateCharacter(db *sql.DB) http.HandlerFunc {
 		character.ID = id
 
 		repo := repositories.NewCharacterRepository(db)
-		_, err := repo.Update(character)
+		_, err = repo.Update(character)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+	}
+}
+
+// RemoveCharacter removes the character by ID
+func RemoveCharacter(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		response := make(map[string]interface{})
+		id, err := strconv.ParseInt(vars["id"], 10, 64)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		repo := repositories.NewCharacterRepository(db)
+
+		affected, err := repo.Remove(id)
+
+		if err != nil {
+			var code int
+
+			if err == sql.ErrNoRows {
+				code = http.StatusNotFound
+			} else {
+				code = http.StatusInternalServerError
+			}
+
+			http.Error(w, err.Error(), code)
+			return
+		}
+
+		response["rows_affected"] = affected
+		w.WriteHeader(http.StatusCreated)
+
+		json.NewEncoder(w).Encode(response)
 	}
 }
