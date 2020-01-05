@@ -107,15 +107,7 @@ func RemoveCharacter(db *sql.DB) http.HandlerFunc {
 		affected, err := repo.Remove(id)
 
 		if err != nil {
-			var code int
-
-			if err == sql.ErrNoRows {
-				code = http.StatusNotFound
-			} else {
-				code = http.StatusInternalServerError
-			}
-
-			http.Error(w, err.Error(), code)
+			http.Error(w, err.Error(), getCode(err))
 			return
 		}
 
@@ -123,5 +115,36 @@ func RemoveCharacter(db *sql.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusCreated)
 
 		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func getCode(err error) int {
+	if err == sql.ErrNoRows {
+		return http.StatusNotFound
+	} else {
+		return http.StatusInternalServerError
+	}
+}
+
+// GetByIDCharacter retrieves the character by ID
+func GetByIDCharacter(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, err := strconv.ParseInt(vars["id"], 10, 64)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		repo := repositories.NewCharacterRepository(db)
+		character, err := repo.GetByID(id)
+
+		if err != nil {
+			http.Error(w, err.Error(), getCode(err))
+			return
+		}
+
+		json.NewEncoder(w).Encode(character)
 	}
 }

@@ -28,6 +28,7 @@ func (server *Server) Start(port string) {
 	server.Mux.HandleFunc("/api/characters", controllers.ReadCharacter(server.DB)).Methods("GET")
 	server.Mux.HandleFunc("/api/characters/{id}", controllers.UpdateCharacter(server.DB)).Methods("PUT")
 	server.Mux.HandleFunc("/api/characters/{id}", controllers.RemoveCharacter(server.DB)).Methods("DELETE")
+	server.Mux.HandleFunc("/api/characters/{id}", controllers.GetByIDCharacter(server.DB)).Methods("GET")
 
 	http.ListenAndServe(":"+port, server)
 }

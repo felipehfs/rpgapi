@@ -175,3 +175,37 @@ func TestRemoveCharacterHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetByIDCharacterHandler(t *testing.T) {
+	example := createCharacter()
+	testCases := []struct {
+		Name         string
+		ID           int64
+		ExpectedCode int
+	}{
+		{"Expected Status 200 - OK", example.ID, http.StatusOK},
+		{"Expected Status 404 - Not Found", 999999, http.StatusNotFound},
+	}
+
+	handler := controllers.GetByIDCharacter(mockDB.DB)
+
+	for _, testCase := range testCases {
+		t.Run(testCase.Name, func(t *testing.T) {
+
+			req := httptest.NewRequest("GET", "/api/characters", nil)
+			req = mux.SetURLVars(req, map[string]string{
+				"id": fmt.Sprintf("%v", testCase.ID),
+			})
+
+			res := httptest.NewRecorder()
+
+			handler(res, req)
+
+			result := res.Result()
+
+			if result.StatusCode != testCase.ExpectedCode {
+				t.Errorf("Expected status code %v but got %v", testCase.ExpectedCode, result.StatusCode)
+			}
+		})
+	}
+}
