@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/felipehfs/rpgapi/config"
 	"github.com/gorilla/mux"
@@ -16,8 +15,6 @@ func main() {
 
 	router := mux.NewRouter()
 	server := config.NewServer(conn, router)
-	server.Routes()
 	defer conn.Close()
-
-	http.ListenAndServe(":8083", server)
+	server.Start("8083")
 }

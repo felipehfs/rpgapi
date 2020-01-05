@@ -22,11 +22,14 @@ func NewServer(db *sql.DB, router *mux.Router) *Server {
 	}
 }
 
-// Routes register all routes
-func (server *Server) Routes() {
+// Start setups the server with routes and port
+func (server *Server) Start(port string) {
 	server.Mux.HandleFunc("/api/characters", controllers.CreateCharacter(server.DB)).Methods("POST")
 	server.Mux.HandleFunc("/api/characters", controllers.ReadCharacter(server.DB)).Methods("GET")
 	server.Mux.HandleFunc("/api/characters/{id}", controllers.UpdateCharacter(server.DB)).Methods("PUT")
+	server.Mux.HandleFunc("/api/characters/{id}", controllers.RemoveCharacter(server.DB)).Methods("DELETE")
+
+	http.ListenAndServe(":"+port, server)
 }
 
 func (server Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
