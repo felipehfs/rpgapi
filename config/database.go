@@ -36,11 +36,11 @@ func SetupDatabase(environment Environment) (*sql.DB, error) {
 	if environment == Development {
 		dbInfo = fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
 			developmentUser, developmentPassword, developmentDatabaseName)
-	}
-
-	if environment == Test {
+	} else if environment == Test {
 		dbInfo = fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
 			testUser, testPassword, testDatabaseName)
+	} else {
+		return nil, fmt.Errorf("Invalid enviroment: %v is not valid", environment)
 	}
 
 	return sql.Open("postgres", dbInfo)
