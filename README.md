@@ -4,10 +4,13 @@ My project using the TDD methodology to build an API.
 
 ## Routes 
 
-|method | endpoint       | description           |
-|-------|----------------|-----------------------|
-|GET    | /api/characters| Display all characters|
-|POST   | /api/characters| Create new character  |
+| Method | Endpoint                        | Description               |
+|--------|---------------------------------|---------------------------|
+| Get    | /api/characters?limit=10&page=1 | Display All characters    |
+| Post   | /api/characters                 | Save a new Character      |
+| Put    | /api/characters/:id             |  Update the character     |
+| Get    | /api/characters/:id             | Show details of character |
+| Delete | /api/characters/:id             | Remove the character      |
 
 ## Requirements
 
